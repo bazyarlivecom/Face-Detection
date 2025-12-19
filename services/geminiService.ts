@@ -1,8 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { DetectedPerson } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
 const analysisSchema = {
   type: Type.ARRAY,
   items: {
@@ -33,6 +31,9 @@ const analysisSchema = {
 };
 
 export const analyzeFrame = async (base64Image: string): Promise<DetectedPerson[]> => {
+  // نمونه‌سازی در لحظه فراخوانی برای اطمینان از دسترسی به کلید API محیطی
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
   try {
     const cleanBase64 = base64Image.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
 
@@ -62,8 +63,14 @@ export const analyzeFrame = async (base64Image: string): Promise<DetectedPerson[
       return JSON.parse(response.text) as DetectedPerson[];
     }
     return [];
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini Analysis Error:", error);
+    // هندلینگ خطای کلید نامعتبر یا یافت نشدن
+    if (error.message?.includes("Requested entity was not found") || error.message?.includes("API Key")) {
+      if (window.aistudio && typeof window.aistudio.openSelectKey === 'function') {
+        window.aistudio.openSelectKey();
+      }
+    }
     throw error;
   }
 };

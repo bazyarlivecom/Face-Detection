@@ -6,8 +6,9 @@ import { analyzeFrame } from './services/geminiService';
 
 const App: React.FC = () => {
   const [sourceType, setSourceType] = useState<CameraSourceType>(CameraSourceType.WEBCAM);
+  const [hasApiKey, setHasApiKey] = useState<boolean>(true);
   
-  // اطلاعات جدید طبق درخواست شما
+  // اطلاعات دوربین شما
   const [dahuaIP, setDahuaIP] = useState('192.168.1.53');
   const [dahuaUser, setDahuaUser] = useState('admin');
   const [dahuaPass, setDahuaPass] = useState('84315308Reza');
@@ -18,11 +19,29 @@ const App: React.FC = () => {
   const [history, setHistory] = useState<{ timestamp: string; count: number }[]>([]);
 
   useEffect(() => {
+    // بررسی وجود کلید API در محیط Studio
+    const checkKey = async () => {
+      if (window.aistudio && typeof window.aistudio.hasSelectedApiKey === 'function') {
+        const selected = await window.aistudio.hasSelectedApiKey();
+        setHasApiKey(selected);
+      }
+    };
+    checkKey();
+  }, []);
+
+  useEffect(() => {
     if (sourceType === CameraSourceType.IP_CAMERA) {
       const newUrl = `http://${dahuaUser}:${dahuaPass}@${dahuaIP}:80/cgi-bin/mjpeg?subtype=1`;
       setIpCameraUrl(newUrl);
     }
   }, [dahuaIP, dahuaUser, dahuaPass, sourceType]);
+
+  const handleOpenKeyDialog = async () => {
+    if (window.aistudio) {
+      await window.aistudio.openSelectKey();
+      setHasApiKey(true);
+    }
+  };
 
   const handleFrameCaptured = async (base64: string) => {
     setIsAnalyzing(true);
@@ -35,11 +54,32 @@ const App: React.FC = () => {
       ]);
     } catch (error) {
       console.error("Analysis failed", error);
-      alert("خطا در آنالیز. مطمئن شوید تصویر دوربین قابل مشاهده است و کلید API معتبر است.");
+      alert("خطا در آنالیز. لطفاً اتصال اینترنت و کلید API را بررسی کنید.");
     } finally {
       setIsAnalyzing(false);
     }
   };
+
+  if (!hasApiKey) {
+    return (
+      <div className="h-screen w-screen flex flex-col items-center justify-center bg-slate-950 text-white p-6 text-center">
+        <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mb-6 shadow-2xl shadow-blue-500/20">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z" />
+          </svg>
+        </div>
+        <h2 className="text-2xl font-bold mb-2">اتصال به هوش مصنوعی</h2>
+        <p className="text-slate-400 mb-8 max-w-sm">برای استفاده از قابلیت تشخیص چهره و آنالیز تصویر، باید کلید API گوگل را متصل کنید.</p>
+        <button 
+          onClick={handleOpenKeyDialog}
+          className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg"
+        >
+          انتخاب کلید API
+        </button>
+        <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" className="mt-6 text-xs text-slate-500 underline">مشاهده مستندات پرداخت و Billing</a>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen w-screen flex flex-col bg-slate-950 text-slate-200 overflow-hidden font-sans">
@@ -76,7 +116,7 @@ const App: React.FC = () => {
                     type="text"
                     value={dahuaIP}
                     onChange={(e) => setDahuaIP(e.target.value)}
-                    placeholder="IP Address"
+                    placeholder="IP"
                     className="bg-slate-900 border border-slate-700 rounded-md px-2 py-1.5 text-[10px] w-28 text-slate-200 focus:border-blue-500 outline-none"
                  />
                  <input 
@@ -114,20 +154,6 @@ const App: React.FC = () => {
                  <div className={`w-2 h-2 rounded-full ${isAnalyzing ? 'bg-yellow-500 animate-pulse' : 'bg-red-500 animate-pulse'}`}></div>
                  {isAnalyzing ? 'در حال پردازش هوشمند' : 'آماده مانیتورینگ'}
              </div>
-
-             {sourceType === CameraSourceType.IP_CAMERA && (
-               <div className="absolute top-4 right-4 max-w-xs bg-slate-900/90 backdrop-blur-md p-3 rounded-lg border border-slate-700 text-[10px] text-slate-400 shadow-2xl">
-                 <p className="font-bold text-blue-400 mb-1 flex items-center gap-1 text-[11px]">
-                    راهنمای تنظیم داهوا:
-                 </p>
-                 <ul className="list-disc ml-3 space-y-1">
-                   <li>استفاده از <b>پورت ۸۰</b> برای HTTP.</li>
-                   <li>لینک تولید شده: <code className="text-white/80">{ipCameraUrl.substring(0, 30)}...</code></li>
-                   <li><b>نکته مهم:</b> در تنظیمات دوربین، استریم دوم (Sub Stream) را روی <b>MJPEG</b> قرار دهید.</li>
-                   <li>در صورت عدم نمایش تصویر، از افزونه <b>Allow CORS</b> در مرورگر استفاده کنید.</li>
-                 </ul>
-               </div>
-             )}
           </div>
         </div>
 
