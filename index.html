@@ -27,8 +27,10 @@
       body {
         background-color: #020617;
         color: #e2e8f0;
+        margin: 0;
+        overflow: hidden;
       }
-      /* Custom scrollbar for log area */
+      /* Custom scrollbar */
       ::-webkit-scrollbar {
         width: 8px;
         height: 8px;
@@ -43,19 +45,30 @@
       ::-webkit-scrollbar-thumb:hover {
         background: #475569; 
       }
+      #root {
+        height: 100vh;
+        width: 100vw;
+      }
     </style>
-  <script type="importmap">
+    <script type="importmap">
 {
   "imports": {
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react": "https://esm.sh/react@19.2.0",
+    "react-dom": "https://esm.sh/react-dom@19.2.0",
+    "react-dom/client": "https://esm.sh/react-dom@19.2.0/client",
+    "@google/genai": "https://esm.sh/@google/genai@1.33.0",
     "react/": "https://esm.sh/react@^19.2.3/",
-    "@google/genai": "https://esm.sh/@google/genai@^1.33.0"
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
   }
 }
 </script>
-</head>
+  </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div style="display: flex; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif; color: #475569;">
+        در حال بارگذاری سیستم مانیتورینگ...
+      </div>
+    </div>
+    <script type="module" src="./index.tsx"></script>
   </body>
 </html>

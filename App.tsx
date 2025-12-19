@@ -6,15 +6,16 @@ import { analyzeFrame } from './services/geminiService';
 
 const App: React.FC = () => {
   const [sourceType, setSourceType] = useState<CameraSourceType>(CameraSourceType.WEBCAM);
-  const [ipCameraUrl, setIpCameraUrl] = useState<string>('http://admin:admin12345@192.168.1.108:80/cgi-bin/mjpeg?subtype=1');
+  
+  // اطلاعات جدید طبق درخواست شما
+  const [dahuaIP, setDahuaIP] = useState('192.168.1.53');
+  const [dahuaUser, setDahuaUser] = useState('admin');
+  const [dahuaPass, setDahuaPass] = useState('84315308Reza');
+  
+  const [ipCameraUrl, setIpCameraUrl] = useState<string>(`http://${dahuaUser}:${dahuaPass}@${dahuaIP}:80/cgi-bin/mjpeg?subtype=1`);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [currentPeople, setCurrentPeople] = useState<DetectedPerson[]>([]);
   const [history, setHistory] = useState<{ timestamp: string; count: number }[]>([]);
-
-  // Dahua URL Builder States
-  const [dahuaIP, setDahuaIP] = useState('192.168.1.108');
-  const [dahuaUser, setDahuaUser] = useState('admin');
-  const [dahuaPass, setDahuaPass] = useState('admin12345');
 
   useEffect(() => {
     if (sourceType === CameraSourceType.IP_CAMERA) {
@@ -34,7 +35,7 @@ const App: React.FC = () => {
       ]);
     } catch (error) {
       console.error("Analysis failed", error);
-      alert("Analysis failed. Ensure the camera stream is accessible and your API key is correct.");
+      alert("خطا در آنالیز. مطمئن شوید تصویر دوربین قابل مشاهده است و کلید API معتبر است.");
     } finally {
       setIsAnalyzing(false);
     }
@@ -111,22 +112,19 @@ const App: React.FC = () => {
              
              <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-sm border border-white/10 px-3 py-1.5 rounded text-xs font-mono text-white flex items-center gap-2">
                  <div className={`w-2 h-2 rounded-full ${isAnalyzing ? 'bg-yellow-500 animate-pulse' : 'bg-red-500 animate-pulse'}`}></div>
-                 {isAnalyzing ? 'AI ANALYZING' : 'READY'}
+                 {isAnalyzing ? 'در حال پردازش هوشمند' : 'آماده مانیتورینگ'}
              </div>
 
              {sourceType === CameraSourceType.IP_CAMERA && (
                <div className="absolute top-4 right-4 max-w-xs bg-slate-900/90 backdrop-blur-md p-3 rounded-lg border border-slate-700 text-[10px] text-slate-400 shadow-2xl">
-                 <p className="font-bold text-blue-400 mb-1 flex items-center gap-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                    </svg>
-                    Dahua Setup Guide:
+                 <p className="font-bold text-blue-400 mb-1 flex items-center gap-1 text-[11px]">
+                    راهنمای تنظیم داهوا:
                  </p>
                  <ul className="list-disc ml-3 space-y-1">
-                   <li>Using <b>HTTP Port 80</b> (as shown in your image).</li>
-                   <li>Format generated: <code className="text-white/80">{ipCameraUrl.substring(0, 20)}...</code></li>
-                   <li><b>Important:</b> In Dahua settings, enable <b>MJPEG</b> for Sub Stream 1.</li>
-                   <li>If blocked, ensure your camera allows CORS or use a browser CORS proxy extension.</li>
+                   <li>استفاده از <b>پورت ۸۰</b> برای HTTP.</li>
+                   <li>لینک تولید شده: <code className="text-white/80">{ipCameraUrl.substring(0, 30)}...</code></li>
+                   <li><b>نکته مهم:</b> در تنظیمات دوربین، استریم دوم (Sub Stream) را روی <b>MJPEG</b> قرار دهید.</li>
+                   <li>در صورت عدم نمایش تصویر، از افزونه <b>Allow CORS</b> در مرورگر استفاده کنید.</li>
                  </ul>
                </div>
              )}

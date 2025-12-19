@@ -31,36 +31,30 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
     
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error("Your browser does not support camera access.");
+        throw new Error("مرورگر شما از دسترسی به دوربین پشتیبانی نمی‌کند.");
       }
 
       const devices = await navigator.mediaDevices.enumerateDevices();
       const hasVideoDevice = devices.some(device => device.kind === 'videoinput');
       
       if (!hasVideoDevice) {
-        throw new Error("No physical camera detected. If you are using a Dahua IP camera, please switch to 'IP Cam' mode above.");
+        throw new Error("دوربین وب‌کم یافت نشد. اگر از دوربین داهوا استفاده می‌کنید، حالت 'Dahua IP Cam' را انتخاب کنید.");
       }
 
-      let stream: MediaStream;
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { width: { ideal: 1280 }, height: { ideal: 720 } } 
-        });
-      } catch (innerErr) {
-        stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      }
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { width: { ideal: 1280 }, height: { ideal: 720 } } 
+      });
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
     } catch (err: any) {
-      console.error("Webcam init error:", err);
-      setStreamError(err.message || "Failed to initialize camera.");
+      setStreamError(err.message || "خطا در راه‌اندازی وب‌کم.");
     }
   }, []);
 
   useEffect(() => {
-    setStreamError(null); // Reset error when switching sources
+    setStreamError(null);
     if (sourceType === CameraSourceType.WEBCAM) {
       startWebcam();
     } else {
@@ -70,13 +64,6 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
         videoRef.current.srcObject = null;
       }
     }
-
-    return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
-        const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-        tracks.forEach(track => track.stop());
-      }
-    };
   }, [sourceType, startWebcam]);
 
   const captureFrame = useCallback(() => {
@@ -101,21 +88,25 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
     const video = videoRef.current;
     if (!video) return;
 
-    if (sourceType === CameraSourceType.WEBCAM) {
-      if (video.videoWidth === 0) return;
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-    } else {
-      const img = video as unknown as HTMLImageElement;
-      canvas.width = img.naturalWidth || 640;
-      canvas.height = img.naturalHeight || 480;
-    }
-
     try {
-      ctx.drawImage(video as any, 0, 0, canvas.width, canvas.height);
+      if (sourceType === CameraSourceType.WEBCAM) {
+        if (video.videoWidth === 0) return;
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video as any, 0, 0);
+      } else {
+        const img = video as unknown as HTMLImageElement;
+        canvas.width = img.naturalWidth || 640;
+        canvas.height = img.naturalHeight || 480;
+        ctx.drawImage(img, 0, 0);
+      }
       onFrameCaptured(canvas.toDataURL('image/jpeg', 0.8));
     } catch (e: any) {
-      alert(`Capture failed: ${e.message}. For Dahua cameras, ensure you are using the HTTP port (80) and MJPEG is enabled.`);
+      console.error(e);
+      alert(`خطای امنیتی (CORS): مرورگر اجازه دسترسی به پیکسل‌های دوربین داهوا را نمی‌دهد. 
+راه حل: 
+1. افزونه "Allow CORS" را در کروم نصب و فعال کنید.
+2. یا در تنظیمات داهوا، استریم MJPEG را بدون یوزرنیم/پسورد (Anonymous) موقتاً تست کنید.`);
     }
   }, [onFrameCaptured, sourceType, isSampleMode]);
 
@@ -131,7 +122,7 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
           src={ipCameraUrl} 
           className="w-full h-full object-cover" 
           crossOrigin="anonymous" 
-          onError={() => setStreamError("Cannot reach Dahua camera. Check IP/Port and MJPEG settings.")}
+          onError={() => setStreamError("ارتباط با دوربین داهوا برقرار نشد. آدرس IP و تنظیم MJPEG را چک کنید.")}
           onLoad={() => setStreamError(null)}
         />
       )}
@@ -162,23 +153,23 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
           disabled={isAnalyzing || (!!streamError && !isSampleMode)}
           className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-full font-bold shadow-xl flex items-center gap-2 disabled:opacity-50"
         >
-          {isAnalyzing ? "Analyzing..." : "Analyze Frame"}
+          {isAnalyzing ? "در حال پردازش..." : "آنالیز تصویر"}
         </button>
       </div>
 
       {streamError && !isSampleMode && (
-        <div className="absolute inset-0 bg-slate-950/95 flex items-center justify-center p-8 text-center">
+        <div className="absolute inset-0 bg-slate-950/95 flex items-center justify-center p-8 text-center z-50">
           <div className="max-w-md">
-            <div className="text-red-500 font-bold mb-2 uppercase tracking-widest text-sm">Connection Issue</div>
-            <p className="text-slate-400 text-sm mb-6">{streamError}</p>
+            <div className="text-red-500 font-bold mb-2 uppercase tracking-widest text-sm">خطای اتصال</div>
+            <p className="text-slate-400 text-sm mb-6 leading-relaxed">{streamError}</p>
             <div className="flex flex-col gap-3">
               {sourceType === CameraSourceType.WEBCAM && (
                 <button onClick={onSwitchToIP} className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded text-xs font-bold transition-all">
-                  Switch to IP Camera (Dahua)
+                  تغییر به دوربین داهوا (IP)
                 </button>
               )}
               <button onClick={() => setIsSampleMode(true)} className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded text-xs transition-colors">
-                Try Demo Mode (Sample Image)
+                استفاده از تصویر نمونه (حالت دمو)
               </button>
             </div>
           </div>
