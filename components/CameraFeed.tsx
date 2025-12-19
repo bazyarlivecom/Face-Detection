@@ -63,7 +63,7 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
       onFrameCaptured(canvas.toDataURL('image/jpeg', 0.9));
     } catch (e) {
       console.error(e);
-      alert("خطای CORS! مرورگر اجازه تحلیل پیکسل‌های دوربین داهوا را نمی‌دهد. راه حل: افزونه 'Allow CORS' را در کروم فعال کنید و صفحه را رفرش کنید.");
+      alert("خطای CORS! مرورگر اجازه تحلیل پیکسل‌های دوربین داهوا را نمی‌دهد. راه حل: افزونه 'Allow CORS: Access-Control-Allow-Origin' را در کروم نصب و فعال کنید.");
     }
   }, [onFrameCaptured, sourceType]);
 
@@ -87,10 +87,10 @@ const CameraFeed: React.FC<CameraFeedProps> = ({
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 text-red-500"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>
                     </div>
                     <h3 className="text-xl font-bold text-white mb-2">عدم اتصال به دوربین داهوا</h3>
-                    <div className="text-slate-400 text-xs space-y-3 max-w-sm leading-relaxed">
+                    <div className="text-slate-400 text-xs space-y-3 max-w-sm leading-relaxed text-right" dir="rtl">
                         <p className="bg-white/5 p-3 rounded-xl border border-white/5">۱. افزونه <b>Allow CORS</b> را در کروم فعال کنید (آیکون C نارنجی شود).</p>
-                        <p className="bg-white/5 p-3 rounded-xl border border-white/5">۲. در پنل داهوا: <code className="text-blue-400">Settings > Camera > Video > Sub Stream</code> را روی <b>MJPEG</b> بگذارید.</p>
-                        <p className="bg-white/5 p-3 rounded-xl border border-white/5">۳. آدرس تست: <a href={ipCameraUrl} target="_blank" className="underline text-blue-500 break-all">{ipCameraUrl}</a></p>
+                        <p className="bg-white/5 p-3 rounded-xl border border-white/5">۲. در پنل داهوا: <code className="text-blue-400">Settings &gt; Camera &gt; Video &gt; Sub Stream</code> را روی <b>MJPEG</b> بگذارید.</p>
+                        <p className="bg-white/5 p-3 rounded-xl border border-white/5 font-bold text-yellow-500">نکته: در صورت خطای ۵۰۲، مطمئن شوید IP و پورت صحیح است و دوربین روشن است.</p>
                     </div>
                 </div>
             )}
